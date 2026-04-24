@@ -1,0 +1,30 @@
+# OS
+.DS_Store
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+
+# Tools
+.pytest_cache/
+.ruff_cache/
+
+# AutoSkill runtime state
+.skill-pipeline/
+output/
+*.npy
+
+# Config (users create their own from .env.example)
+.env
+
+# IDE
+.vscode/
+.idea/
+
+# Claude
+.claude/
+
+# Input skills (large, user-provided)
+input_skills/

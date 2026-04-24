@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AutoSkill</title>
+  <script src="https://d3js.org/d3.v7.min.js"></script>
+  <script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+  <header>
+    <h1>AutoSkill</h1>
+    <span id="ws-status" class="status disconnected">Disconnected</span>
+  </header>
+
+  <!-- Pipeline Status -->
+  <div id="pipeline-status" class="pipeline-status hidden">
+    <div class="pipeline-status-header">
+      <span id="pipeline-stage" class="stage-badge">idle</span>
+      <span id="pipeline-message"></span>
+      <span id="pipeline-elapsed"></span>
+    </div>
+    <div class="progress-wrapper"><div class="progress-bar" id="pipeline-bar"></div></div>
+    <div class="pipeline-detail" id="pipeline-detail"></div>
+  </div>
+
+  <main>
+    <div class="panels">
+      <div class="panel" id="graph-panel">
+        <h2>Skill Graph
+          <button class="fullscreen-btn" onclick="toggleFullscreen('graph-panel')" title="Toggle fullscreen">⛶</button>
+        </h2>
+        <div class="graph-legend">
+          <span class="legend-item"><span class="legend-dot" style="background:#000080"></span> Skill</span>
+          <span class="legend-item"><span class="legend-dot" style="background:#008000; border-radius:50%"></span> Knowledge</span>
+          <span class="legend-item"><span class="legend-dot" style="background:#808000; transform:rotate(45deg)"></span> Template</span>
+        </div>
+        <div id="graph-container"></div>
+      </div>
+      <div class="panel" id="umap-panel">
+        <h2>Embedding Space
+          <button class="fullscreen-btn" onclick="toggleFullscreen('umap-panel')" title="Toggle fullscreen">⛶</button>
+        </h2>
+        <div id="umap-container"></div>
+      </div>
+    </div>
+  </main>
+
+  <script src="/static/app.js"></script>
+</body>
+</html>

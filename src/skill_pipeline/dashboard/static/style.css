@@ -1,0 +1,288 @@
+/* Skill Pipeline Dashboard - Windows 95 Theme */
+
+@import url('https://fonts.googleapis.com/css2?family=MS+Sans+Serif&display=swap');
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  background: #008080;
+  color: #000;
+  font-family: "MS Sans Serif", "Microsoft Sans Serif", Tahoma, Geneva, sans-serif;
+  font-size: 11px;
+  min-height: 100vh;
+}
+
+/* Win95 3D border helpers */
+.win95-outset {
+  border: 2px solid;
+  border-color: #fff #808080 #808080 #fff;
+  box-shadow: inset -1px -1px 0 #dfdfdf, inset 1px 1px 0 #000;
+}
+.win95-inset {
+  border: 2px solid;
+  border-color: #808080 #fff #fff #808080;
+  box-shadow: inset 1px 1px 0 #000, inset -1px -1px 0 #dfdfdf;
+}
+
+/* Title bar */
+header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 2px 4px;
+  background: linear-gradient(90deg, #000080, #1084d0);
+  color: #fff;
+  font-weight: 700;
+  font-size: 12px;
+  height: 22px;
+}
+
+header h1 {
+  font-size: 12px;
+  color: #fff;
+  font-weight: 700;
+  letter-spacing: 0;
+}
+
+.status {
+  font-size: 11px;
+  padding: 1px 6px;
+  background: #c0c0c0;
+  color: #000;
+  border: 2px solid;
+  border-color: #fff #808080 #808080 #fff;
+}
+.status.connected { background: #c0c0c0; color: #008000; }
+.status.disconnected { background: #c0c0c0; color: #ff0000; }
+
+main { padding: 4px; }
+
+.panels {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 4px;
+  margin-bottom: 4px;
+}
+
+/* Window panels */
+.panel {
+  background: #c0c0c0;
+  border: 2px solid;
+  border-color: #fff #808080 #808080 #fff;
+  padding: 0;
+  overflow: auto;
+}
+
+.panel h2 {
+  font-size: 12px;
+  color: #fff;
+  background: linear-gradient(90deg, #000080, #1084d0);
+  padding: 2px 4px;
+  margin: 0;
+  text-transform: none;
+  letter-spacing: 0;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: 700;
+}
+
+.fullscreen-btn {
+  background: #c0c0c0;
+  border: 2px solid;
+  border-color: #fff #808080 #808080 #fff;
+  color: #000;
+  font-size: 10px;
+  cursor: pointer;
+  padding: 0 4px;
+  line-height: 14px;
+  height: 16px;
+  min-width: 16px;
+}
+.fullscreen-btn:active {
+  border-color: #808080 #fff #fff #808080;
+}
+
+/* Fullscreen panel */
+.panel.fullscreen {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  border-radius: 0;
+  margin: 0;
+  max-width: 100vw;
+  max-height: 100vh;
+  overflow: auto;
+}
+.panel.fullscreen #graph-container,
+.panel.fullscreen #umap-container {
+  min-height: calc(100vh - 30px);
+  height: calc(100vh - 30px);
+}
+
+#graph-container {
+  min-height: 550px;
+  background: #fff;
+  border: 2px solid;
+  border-color: #808080 #fff #fff #808080;
+  margin: 3px;
+}
+#umap-container {
+  min-height: 600px;
+  background: #fff;
+  border: 2px solid;
+  border-color: #808080 #fff #fff #808080;
+  margin: 3px;
+}
+
+/* Graph legend */
+.graph-legend {
+  display: flex;
+  gap: 12px;
+  padding: 3px 4px;
+  font-size: 11px;
+  background: #c0c0c0;
+}
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  color: #000;
+}
+.legend-dot {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border: 1px solid #000;
+}
+
+.empty { color: #808080; text-align: center; padding: 40px; }
+
+/* Table */
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 11px;
+  background: #fff;
+}
+
+th, td {
+  padding: 2px 6px;
+  text-align: left;
+  border: 1px solid #808080;
+}
+
+th {
+  color: #000;
+  font-weight: 700;
+  background: #c0c0c0;
+  border: 2px solid;
+  border-color: #fff #808080 #808080 #fff;
+  text-transform: none;
+  font-size: 11px;
+  letter-spacing: 0;
+}
+
+tr:hover { background: #000080; color: #fff; }
+
+/* Buttons */
+.btn {
+  padding: 2px 12px;
+  border: 2px solid;
+  border-color: #fff #808080 #808080 #fff;
+  cursor: pointer;
+  font-size: 11px;
+  font-weight: 400;
+  margin-right: 2px;
+  background: #c0c0c0;
+  color: #000;
+  font-family: inherit;
+}
+.btn:active {
+  border-color: #808080 #fff #fff #808080;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .panels { grid-template-columns: 1fr; }
+}
+
+/* Pipeline Status Bar */
+.pipeline-status {
+  margin: 4px 4px 0;
+  background: #c0c0c0;
+  border: 2px solid;
+  border-color: #fff #808080 #808080 #fff;
+  padding: 4px 6px;
+}
+.pipeline-status.hidden { display: none; }
+.pipeline-status-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 4px;
+  font-size: 11px;
+}
+.stage-badge {
+  padding: 1px 6px;
+  font-weight: 700;
+  font-size: 11px;
+  text-transform: none;
+  background: #c0c0c0;
+  border: 1px solid #808080;
+}
+.stage-badge.parsing { background: #c0c0c0; color: #000080; }
+.stage-badge.embedding { background: #c0c0c0; color: #808000; }
+.stage-badge.analyzing { background: #c0c0c0; color: #808000; }
+.stage-badge.extracting { background: #c0c0c0; color: #000080; }
+.stage-badge.writing { background: #c0c0c0; color: #008000; }
+.stage-badge.done { background: #c0c0c0; color: #008000; }
+.stage-badge.error { background: #c0c0c0; color: #ff0000; }
+.stage-badge.idle { background: #c0c0c0; color: #808080; }
+#pipeline-message { color: #000; flex: 1; }
+#pipeline-elapsed { color: #808080; font-size: 11px; }
+.pipeline-detail {
+  font-size: 11px;
+  color: #000;
+  margin-top: 2px;
+}
+
+/* Win95 Progress Bar */
+.progress-wrapper {
+  background: #fff;
+  border: 2px solid;
+  border-color: #808080 #fff #fff #808080;
+  height: 18px;
+  overflow: hidden;
+  margin-bottom: 4px;
+  padding: 1px;
+}
+.progress-bar {
+  height: 100%;
+  background: repeating-linear-gradient(
+    90deg,
+    #000080 0px,
+    #000080 8px,
+    transparent 8px,
+    transparent 10px
+  );
+  transition: width 0.3s ease;
+  width: 0%;
+}
+
+/* Status bar at bottom feel */
+.progress-info {
+  display: flex;
+  justify-content: space-between;
+  font-size: 11px;
+  color: #000;
+  margin-bottom: 2px;
+}
+.progress-current {
+  font-size: 11px;
+  color: #000;
+  padding: 2px 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
