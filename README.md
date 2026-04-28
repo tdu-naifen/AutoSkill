@@ -1,77 +1,143 @@
-# AutoSkill
+<h1 align="center">AutoSkill</h1>
 
-![AutoSkill Demo](assets/demo.gif)
+<p align="center">
+  <strong>Local knowledge graph + skill deduplication for AI agents</strong><br>
+  <sub>Drop files in, get organized knowledge out — zero cloud dependency</sub>
+</p>
 
-AI agent skills accumulate fast. Different teams write overlapping guides for the same cloud services, CLI tools, and best practices. **AutoSkill** finds that overlap automatically — extracting shared knowledge and output templates — so your agents stay lean and consistent.
+<p align="center">
+  <img src="https://img.shields.io/badge/python-3.11+-blue" alt="Python 3.11+" />
+  <img src="https://img.shields.io/badge/obsidian-plugin-purple" alt="Obsidian Plugin" />
+  <img src="https://img.shields.io/badge/MCP-compatible-green" alt="MCP Compatible" />
+  <img src="https://img.shields.io/badge/license-MIT-lightgrey" alt="License" />
+</p>
 
-## How it works
 
-Drop in a folder of skills (each with a `SKILL.md`), and AutoSkill will:
+<p align="center">
+  <img src="assets/obsidian-demo.gif" width="720" alt="AutoSkill Demo" />
+</p>
 
-- **Detect similar skills** using semantic embeddings — configurable model, default nomic-embed-text-v1.5 with 8192 token context
-- **Extract shared knowledge** via LLM — only for skill pairs that actually overlap, not every combination
-- **Detect output templates** — files that instruct agents to generate reports, plans, or other structured output
-- **Produce a clean output** where skills reference shared knowledge and templates instead of duplicating content
+---
 
-For example, if `azure-cost` and `aws-cost` both explain tagging best practices, AutoSkill extracts that into `knowledge/cost-tagging-patterns` and links both skills to it. If `azure-cost` has a report template, it appears as a separate `templates/azure-cost-report-template`.
+AutoSkill watches a folder for AI agent skills and documents, deduplicates overlapping knowledge, builds a local vector-indexed knowledge graph, and proposes new skills — all running on your machine with a local LLM.
 
-## Incremental by default
+## Features
 
-Adding new skills doesn't restart from scratch. AutoSkill caches embeddings and previous LLM extractions — only new skills and their new pairings get processed.
+- **Skill Deduplication** — Detects overlapping skills via embeddings, extracts shared knowledge with LLM
+- **Knowledge Indexing** — PDF, Markdown, DOCX, HTML, TXT parsed, chunked, and stored in ChromaDB
+- **Auto-Tagging** — Two-tier: high-similarity inherits neighbor tags, otherwise local LLM assigns them
+- **Skill Proposals** — Conservative LLM evaluation proposes new Claude Code skills from your documents
+- **Live Dashboard** — Real-time skill graph, 3D embedding space, pipeline status
+- **Obsidian Integration** — Output folder is your vault; bundled plugin shows tags, proposals, and search
+- **MCP Server** — Claude Code queries your knowledge graph for passive augmentation
+- **Fully Local** — Embeddings via sentence-transformers, LLM via oMLX / any OpenAI-compatible API
 
-## Live dashboard
-
-A built-in dashboard lets you watch the pipeline run and explore results:
-
-- **Skill Graph** — skills (top), shared knowledge (middle), and templates (bottom) with hover cross-highlighting
-- **Embedding Space** — interactive 3D scatter of all skills and knowledge, cross-highlighted with the graph
-- **Pipeline Status** — live progress bar during ingestion
-
-## Output
-
-```
-output/
-  skills/
-    azure-cost/SKILL.md                    # original skill with knowledge + template refs
-    aws-serverless-eda/SKILL.md
-  knowledge/
-    cost-tagging-patterns/KNOWLEDGE.md     # shared knowledge extracted from similar skills
-  templates/
-    azure-cost-report-template/TEMPLATE.md # output template detected from skills
-```
-
-Skills keep their original content, sub-files, and metadata. `knowledge:` and `templates:` fields are added to their frontmatter pointing to the relevant shared resources.
-
-## Quick start
+## Quick Start
 
 ```bash
 uv sync
-cp .env.example .env   # customize your LLM, embedding model, etc.
-uv run skill-pipeline ingest ./my-skills --output output
-uv run skill-pipeline dashboard
+cp .env.example .env
+
+# Index documents
+uv run autoskill index input_skills/*.md input_skills/*.pdf --vault input_skills --output output
+
+# Deduplicate skills
+uv run autoskill ingest input_skills --output output
+
+# Launch dashboard
+uv run autoskill dashboard
+# → http://localhost:8420
 ```
+
+## Dashboard
+
+<p align="center">
+  <img src="assets/dashboard-demo.gif" width="720" alt="Dashboard" />
+</p>
+
+Interactive skill graph with shared knowledge nodes, 3D embedding scatter plot, and live pipeline progress.
+
+## How It Works
+
+```mermaid
+flowchart LR
+    subgraph Input["input_skills/"]
+        S["SKILL.md folders"]
+        D["PDF / MD / DOCX / TXT"]
+    end
+
+    subgraph Pipeline["AutoSkill"]
+        direction TB
+        E["Embed\n(nomic-embed-text)"]
+        SIM["Cosine Similarity\n> 0.75"]
+        LLM["Local LLM\n(oMLX)"]
+        TAG["Auto-Tag"]
+        PROP["Proposal\nEvaluator"]
+        DB[("ChromaDB")]
+    end
+
+    subgraph Output["output/ (Obsidian vault)"]
+        SK["skills/\n+ knowledge refs"]
+        KN["knowledge/\nshared topics"]
+        PR["proposals/\nskill candidates"]
+        OB[".obsidian/\nplugin UI"]
+    end
+
+    S --> E --> SIM --> LLM --> KN
+    S --> SK
+    D --> E --> DB --> TAG --> SK
+    DB --> PROP --> PR
+    DB --> MCP["MCP Server"] --> CC["Claude Code"]
+    Output --> OB
+```
+
+**Skills** with cosine similarity > 0.75 get their shared knowledge extracted into standalone files. Each skill's frontmatter points back to the knowledge it references.
+
+**Documents** are chunked, embedded, auto-tagged, and stored in ChromaDB. If a document looks like a reusable coding convention, a skill proposal is generated.
+
+**Claude Code** connects via MCP to search your knowledge graph while working — passive augmentation with no manual lookups.
+
+## Commands
+
+| Command | Description |
+|---------|-------------|
+| `autoskill ingest <dir>` | Deduplicate skills, extract shared knowledge |
+| `autoskill index <files>` | Index documents into knowledge graph |
+| `autoskill watch <dir>` | Watch for new files, process continuously |
+| `autoskill dashboard` | Launch web dashboard |
+| `autoskill mcp-serve <vault>` | Start MCP server for Claude Code |
+| `autoskill proposals` | List pending skill proposals |
 
 ## Configuration
 
-Copy `.env.example` to `.env` and customize:
-
 ```bash
-# LLM — any OpenAI-compatible API (oMLX, Ollama, vLLM, OpenAI, etc.)
-LLM_MODEL=gemma-4-26b-a4b-it-4bit
+# .env
+LLM_MODEL=gemma-4-26b-a4b-it-4bit        # Any model via oMLX / Ollama / vLLM
 LLM_URL=http://127.0.0.1:1111/v1/chat/completions
-LLM_API_KEY=test
-
-# Embedding — any sentence-transformers compatible model
 EMBED_MODEL=nomic-ai/nomic-embed-text-v1.5
-
-# Similarity threshold — how similar two skills need to be for knowledge extraction (0.0-1.0)
 SIMILARITY_THRESHOLD=0.75
 ```
 
-All settings have sensible defaults. Without a `.env` file, AutoSkill uses a local oMLX server and nomic-embed-text-v1.5.
+## Architecture
+
+```
+cli.py                 Thin entry point
+├── skills/            Skill parsing, dedup pipeline, writer
+├── knowledge/         Doc parsing, chunking, ChromaDB, tagging, watcher
+├── proposals/         LLM evaluation, progressive threshold tracking
+├── mcp/               FastMCP server (7 tools)
+├── dashboard/         FastAPI + D3 + Plotly
+└── core/              Embedder, LLM client, config, progress
+```
+
+All data stored in `.skill-pipeline/` (ChromaDB + JSON). No cloud services required.
 
 ## Requirements
 
 - Python 3.11+
-- An OpenAI-compatible LLM API for knowledge extraction
-- GPU recommended for the embedding model
+- An OpenAI-compatible LLM API (oMLX, Ollama, vLLM, etc.)
+- ~2GB disk for embedding model on first run
+
+## License
+
+MIT

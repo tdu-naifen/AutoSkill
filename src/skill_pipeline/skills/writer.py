@@ -10,12 +10,13 @@ output/
 
 from __future__ import annotations
 
-import shutil
 from pathlib import Path
 
 import yaml
 
-from skill_pipeline.parser import ParsedSkill
+from skill_pipeline.skills.parser import ParsedSkill
+
+PROTECTED_PREFIXES = (".",)  # never touch .obsidian, .git, etc.
 
 
 def write_output(
@@ -27,12 +28,15 @@ def write_output(
     output_dir = Path(output_dir)
     skills_dir = output_dir / "skills"
     knowledge_dir = output_dir / "knowledge"
+    templates_dir = output_dir / "templates"
 
-    if output_dir.exists():
-        shutil.rmtree(output_dir)
-
+    # Incremental: create dirs, never destroy output root
+    # (stale file cleanup happens at end via _cleanup_stale)
     skills_dir.mkdir(parents=True, exist_ok=True)
     knowledge_dir.mkdir(parents=True, exist_ok=True)
+
+    # Track every file we write this run
+    written_files: set[Path] = set()
 
     # Build reverse map: skill_name -> [knowledge_topics]
     skill_knowledge: dict[str, list[str]] = {}
@@ -78,12 +82,14 @@ def write_output(
         # Write SKILL.md with original content
         content = f"{frontmatter}\n\n{skill.content}\n"
         (sk_dir / "SKILL.md").write_text(content, encoding="utf-8")
+        written_files.add(sk_dir / "SKILL.md")
 
         # Write sub-files in their original relative paths
         for rel_path, sub_content in skill.sub_files.items():
             sub_file = sk_dir / rel_path
             sub_file.parent.mkdir(parents=True, exist_ok=True)
             sub_file.write_text(sub_content, encoding="utf-8")
+            written_files.add(sub_file)
 
     # Write knowledge
     for topic, kdata in sorted(knowledge.items()):
@@ -105,9 +111,9 @@ def write_output(
         heading = topic.replace("-", " ").title()
         content = f"{frontmatter}\n\n# {heading}\n\n{body}\n"
         (k_dir / "KNOWLEDGE.md").write_text(content, encoding="utf-8")
+        written_files.add(k_dir / "KNOWLEDGE.md")
 
     # Write templates
-    templates_dir = output_dir / "templates"
     all_templates: dict[str, tuple[str, list[str]]] = {}  # name -> (content, [skill_names])
     for skill in skills:
         for tpl_name, tpl_content in skill.templates.items():
@@ -133,3 +139,29 @@ def write_output(
         heading = tpl_name.replace("-", " ").title()
         content = f"{frontmatter}\n\n# {heading}\n\n{tpl_content}\n"
         (t_dir / "TEMPLATE.md").write_text(content, encoding="utf-8")
+        written_files.add(t_dir / "TEMPLATE.md")
+
+    # CLEANUP: remove stale files in managed dirs only
+    managed_dirs = [skills_dir, knowledge_dir, templates_dir]
+    _cleanup_stale(managed_dirs, written_files)
+
+
+def _cleanup_stale(managed_dirs: list[Path], written_files: set[Path]) -> None:
+    """Remove files/dirs in managed_dirs that weren't written this run.
+
+    NEVER touches paths starting with '.' at any level.
+    """
+    for managed_dir in managed_dirs:
+        if not managed_dir.exists():
+            continue
+        for item in managed_dir.rglob("*"):
+            # Skip dotfiles/dotdirs
+            if any(part.startswith(".") for part in item.relative_to(managed_dir).parts):
+                continue
+            if item.is_file() and item not in written_files:
+                item.unlink()
+        # Remove empty dirs (bottom-up), skip dotdirs
+        for item in sorted(managed_dir.rglob("*"), reverse=True):
+            if item.is_dir() and not any(item.iterdir()):
+                if not any(part.startswith(".") for part in item.relative_to(managed_dir).parts):
+                    item.rmdir()

@@ -28,3 +28,5 @@ output/
 
 # Input skills (large, user-provided)
 input_skills/
+
+*/node_modules/*

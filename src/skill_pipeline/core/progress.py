@@ -8,7 +8,7 @@ from pathlib import Path
 
 
 def _status_path() -> Path:
-    from skill_pipeline.store import get_state_dir
+    from skill_pipeline.core.store import get_state_dir
     return get_state_dir() / "status.json"
 
 

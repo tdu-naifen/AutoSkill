@@ -12,7 +12,8 @@ import numpy as np
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect
 from fastapi.responses import RedirectResponse
 
-from skill_pipeline import store
+from skill_pipeline.core import store
+from skill_pipeline.knowledge.chromadb_store import SkillStore
 
 logger = logging.getLogger(__name__)
 
@@ -28,17 +29,30 @@ async def root():
 
 @router.get("/api/status")
 async def get_status():
-    from skill_pipeline.progress import get_status
+    from skill_pipeline.core.progress import get_status
     return get_status()
+
+
+@router.get("/api/pipeline-status")
+async def get_pipeline_status():
+    """Return unified pipeline status: what's being processed, queue, recent."""
+    from skill_pipeline.core.progress import get_status
+    status = get_status()
+    # Also include proposal count
+    try:
+        from skill_pipeline.proposals.evaluator import list_pending_proposals
+        from .app import output_dir
+        proposals = list_pending_proposals(Path(output_dir))
+        status["pending_proposals"] = len(proposals)
+    except Exception:
+        status["pending_proposals"] = 0
+    return status
 
 
 @router.get("/api/skills")
 async def get_skills():
     """Return parsed skills list."""
-    path = store.get_state_dir() / "skills.json"
-    if path.exists():
-        return json.loads(path.read_text(encoding="utf-8"))
-    return []
+    return SkillStore().get_all_with_metadata()
 
 
 @router.get("/api/pairs")
@@ -64,10 +78,7 @@ async def get_graph():
     """Return a D3-compatible graph: nodes (skills + knowledge) and links."""
     state = store.get_state_dir()
 
-    skills = []
-    skills_path = state / "skills.json"
-    if skills_path.exists():
-        skills = json.loads(skills_path.read_text(encoding="utf-8"))
+    skills = SkillStore().get_all_with_metadata()
 
     knowledge = {}
     knowledge_path = state / "knowledge.json"
@@ -81,6 +92,7 @@ async def get_graph():
 
     # Build nodes
     nodes = []
+    seen_ids: set[str] = set()
     for s in skills:
         nodes.append({
             "id": s["name"],
@@ -88,10 +100,13 @@ async def get_graph():
             "description": s.get("description", "")[:120],
             "sub_files": s.get("sub_file_count", 0),
         })
+        seen_ids.add(s["name"])
         # Template nodes
-        for tpl in s.get("templates", []):
+        for tpl in [t for t in s.get("templates", "").split(",") if t.strip()]:
+            tpl = tpl.strip()
             tpl_id = f"t:{tpl}"
-            if not any(n["id"] == tpl_id for n in nodes):
+            if tpl_id not in seen_ids:
+                seen_ids.add(tpl_id)
                 nodes.append({
                     "id": tpl_id,
                     "type": "template",
@@ -128,7 +143,7 @@ async def get_graph():
 
     # Template links
     for s in skills:
-        for tpl in s.get("templates", []):
+        for tpl in [t.strip() for t in s.get("templates", "").split(",") if t.strip()]:
             links.append({
                 "source": s["name"],
                 "target": f"t:{tpl}",
@@ -142,17 +157,13 @@ async def get_graph():
 async def get_embeddings():
     """Return UMAP-projected skill + knowledge embeddings for 3D scatter."""
     state = store.get_state_dir()
-    emb_path = state / "embeddings.npy"
-    skills_path = state / "skills.json"
     knowledge_path = state / "knowledge.json"
 
-    if not emb_path.exists() or not skills_path.exists():
-        return []
+    skill_store = SkillStore()
+    names, embeddings = skill_store.get_all_embeddings()
+    skills = skill_store.get_all_with_metadata()
 
-    embeddings = np.load(emb_path)
-    skills = json.loads(skills_path.read_text(encoding="utf-8"))
-
-    if embeddings.shape[0] < 2:
+    if len(names) < 2:
         return []
 
     # Embed knowledge topics and combine
@@ -161,7 +172,7 @@ async def get_embeddings():
         knowledge = json.loads(knowledge_path.read_text(encoding="utf-8"))
 
     if knowledge:
-        from skill_pipeline import embedder
+        from skill_pipeline.core import embedder
         k_texts = []
         k_names = []
         k_descs = []
@@ -192,20 +203,23 @@ async def get_embeddings():
         projected = centered @ vt[:3].T
 
     results = []
-    for i, skill in enumerate(skills):
+    # Build a name->metadata lookup
+    skill_meta = {s["name"]: s for s in skills}
+    for i, name in enumerate(names):
         if i >= projected.shape[0]:
             break
+        meta = skill_meta.get(name, {})
         results.append({
-            "id": skill["name"],
+            "id": name,
             "x": float(projected[i, 0]),
             "y": float(projected[i, 1]),
             "z": float(projected[i, 2]),
-            "name": skill["name"],
+            "name": name,
             "type": "skill",
-            "description": skill.get("description", "")[:120],
+            "description": meta.get("description", "")[:120],
         })
 
-    offset = len(skills)
+    offset = len(names)
     for i, name in enumerate(k_names):
         idx = offset + i
         if idx >= projected.shape[0]:

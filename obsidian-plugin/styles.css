@@ -1,0 +1,89 @@
+.autoskill-section {
+    margin-bottom: 16px;
+}
+
+.autoskill-section h4 {
+    margin: 0 0 8px 0;
+    cursor: pointer;
+}
+
+.autoskill-section-body {
+    padding-left: 8px;
+}
+
+.autoskill-muted {
+    color: var(--text-muted);
+    font-style: italic;
+}
+
+.autoskill-error {
+    color: var(--text-error);
+}
+
+.autoskill-processing {
+    color: var(--text-accent);
+}
+
+.autoskill-loading {
+    color: var(--text-muted);
+    text-align: center;
+    padding: 20px 0;
+}
+
+.autoskill-tag-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+}
+
+.autoskill-tag-chip {
+    background: var(--tag-background);
+    color: var(--tag-color);
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-size: 0.85em;
+    cursor: pointer;
+}
+
+.autoskill-tag-chip:hover {
+    background: var(--tag-background-hover);
+}
+
+.autoskill-proposal-row {
+    border: 1px solid var(--background-modifier-border);
+    border-radius: 6px;
+    padding: 8px;
+    margin-bottom: 8px;
+}
+
+.autoskill-proposal-summary {
+    color: var(--text-muted);
+    font-size: 0.9em;
+    margin: 4px 0;
+}
+
+.autoskill-proposal-actions {
+    display: flex;
+    gap: 8px;
+    margin-top: 8px;
+}
+
+.autoskill-search-input {
+    padding: 8px;
+    border: 1px solid var(--background-modifier-border);
+    border-radius: 6px;
+    background: var(--background-primary);
+    color: var(--text-normal);
+}
+
+.autoskill-result-card {
+    border: 1px solid var(--background-modifier-border);
+    border-radius: 6px;
+    padding: 10px;
+    margin-bottom: 8px;
+    cursor: pointer;
+}
+
+.autoskill-result-card:hover {
+    background: var(--background-modifier-hover);
+}
