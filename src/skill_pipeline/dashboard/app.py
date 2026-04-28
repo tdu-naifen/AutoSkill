@@ -14,7 +14,7 @@ from .routes import router
 ws_clients: list = []
 
 # Global output directory — set by create_app
-output_dir: str = "output/skills"
+output_dir: str = "output"
 
 
 async def broadcast(data: dict):
@@ -30,11 +30,14 @@ async def broadcast(data: dict):
         ws_clients.remove(ws)
 
 
-def create_app(output: str = "output/skills") -> FastAPI:
+def create_app(output: str = "output") -> FastAPI:
     global output_dir
     output_dir = output
     app = FastAPI(title="AutoSkill")
     app.include_router(router)
+    from .kg_routes import router as kg_router, configure as kg_configure
+    kg_configure(Path(output))  # output IS the vault root now
+    app.include_router(kg_router)
     static_dir = Path(__file__).parent / "static"
     app.mount("/static", StaticFiles(directory=str(static_dir)), name="static")
     return app

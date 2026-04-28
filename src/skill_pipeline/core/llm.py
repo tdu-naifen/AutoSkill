@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import logging
 import os
+import re
 
 import httpx
 
@@ -14,7 +15,7 @@ LLM_URL = os.getenv("LLM_URL", "http://127.0.0.1:1111/v1/chat/completions")
 LLM_API_KEY = os.getenv("LLM_API_KEY", "test")
 
 
-def _strip_fences(text: str) -> str:
+def strip_fences(text: str) -> str:
     """Strip markdown code fences from LLM output."""
     cleaned = text.strip()
     if cleaned.startswith("```"):
@@ -23,7 +24,16 @@ def _strip_fences(text: str) -> str:
     return cleaned.strip()
 
 
-async def _llm_call(prompt: str) -> str:
+
+def clean_json(text: str) -> str:
+    """Strip markdown fences and fix trailing-comma issues in LLM JSON output."""
+    cleaned = strip_fences(text)
+    cleaned = re.sub(r",\s*}", "}", cleaned)
+    cleaned = re.sub(r",\s*]", "]", cleaned)
+    return cleaned
+
+
+async def llm_call(prompt: str) -> str:
     """Make a raw LLM call and return the response content string."""
     async with httpx.AsyncClient(timeout=120.0) as client:
         resp = await client.post(

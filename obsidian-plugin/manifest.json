@@ -1,0 +1,9 @@
+{
+    "id": "autoskill",
+    "name": "AutoSkill Knowledge Graph",
+    "version": "0.1.0",
+    "minAppVersion": "1.5.0",
+    "description": "Knowledge graph integration — inbox monitoring, auto-tagging, skill proposals, and semantic search.",
+    "author": "tingzhen",
+    "isDesktopOnly": true
+}

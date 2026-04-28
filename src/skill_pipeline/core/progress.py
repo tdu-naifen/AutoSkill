@@ -8,7 +8,7 @@ from pathlib import Path
 
 
 def _status_path() -> Path:
-    from skill_pipeline.store import get_state_dir
+    from skill_pipeline.core.store import get_state_dir
     return get_state_dir() / "status.json"
 
 
@@ -68,9 +68,3 @@ def update(*, stage: str | None = None, current_file: str | None = None,
     if started_at is not None:
         data["started_at"] = started_at
     _write(data)
-
-
-def reset() -> None:
-    """Reset to idle."""
-    _write({"stage": "idle", "current_file": "", "files_done": 0, "files_total": 0,
-            "chunks_total": 0, "message": "", "started_at": 0.0})
